@@ -1,8 +1,8 @@
 #include <Arduino.h>
-#include <WiFi.h>
+#include <WiFi.hh>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
-#include "CrankSignal.h" // Assuming this is the fixed-point version
+#include "CrankSignal.h"
 #include "Display.h"
 #include "Input.h"
 
@@ -28,13 +28,15 @@ RelayMode current_relay_mode = RELAY_OFF;
 int current_pwm_duty = 50;
 AsyncWebServer server(80);
 
+unsigned long last_display_update = 0;
+
 void update_relay_state();
 
 void setup() {
   Serial.begin(115200);
   display_init();
   input_init(BTN_UP_PIN, BTN_DOWN_PIN, BTN_SELECT_PIN);
-  for (int i = 0; i < num_gpio_pins; i++) { pinMode(gpio_pins[i].pin, OUTPUT); }
+  for (int i = 0; i < num_gpio_pins; i++) { pinMode(gpio_pins[i].pin, OUTPUT); digitalWrite(gpio_pins[i].pin, gpio_pins[i].state); }
   pinMode(RELAY_PIN, OUTPUT);
   ledcSetup(PWM_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
   ledcAttachPin(RELAY_PIN, PWM_CHANNEL);
@@ -52,7 +54,26 @@ void setup() {
   server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/style.css", "text/css"); });
   server.on("/app.js", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/app.js", "text/javascript"); });
 
-  server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request){ /* Manual JSON building */ });
+  server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request){
+    String json = "{";
+    json += "\"gpio\":{";
+    for (int i = 0; i < num_gpio_pins; i++) {
+        json += "\"" + String(gpio_pins[i].pin) + "\":" + (gpio_pins[i].state ? "true" : "false");
+        if (i < num_gpio_pins - 1) json += ",";
+    }
+    json += "},\"generator\":{";
+    json += "\"rpm\":" + String(engine_simulator_get_current_rpm()) + ",";
+    json += "\"pattern\":\"" + String(engine_simulator_get_current_pattern_name()) + "\"";
+    json += "},\"ignition\":{";
+    json += "\"dwell\":" + String(engine_simulator_get_current_dwell_time_ms(), 1) + ",";
+    json += "\"angle\":" + String(engine_simulator_get_current_ignition_angle_btdc());
+    json += "},\"relay\":{";
+    const char* mode_str = (current_relay_mode == RELAY_OFF) ? "off" : ((current_relay_mode == RELAY_ON) ? "on" : "pwm");
+    json += "\"mode\":\"" + String(mode_str) + "\",";
+    json += "\"pwm_duty\":" + String(current_pwm_duty);
+    json += "}}";
+    request->send(200, "application/json", json);
+  });
 
   server.on("/toggle", HTTP_GET, [](AsyncWebServerRequest *request){
     if (request->hasParam("pin") && request->hasParam("state")) {
@@ -61,8 +82,8 @@ void setup() {
       Serial.printf("[WEB] Toggle GPIO %d -> %s\n", pin, state ? "ON" : "OFF");
       for (int i = 0; i < num_gpio_pins; i++) {
         if (gpio_pins[i].pin == pin) {
-          gpio_pins[i].state = state;
-          digitalWrite(pin, state);
+          gpio_pins[i].state = state; // <--- ВАЖНОЕ ИСПРАВЛЕНИЕ
+          digitalWrite(gpio_pins[i].pin, state);
           request->send(200);
           return;
         }
@@ -109,8 +130,6 @@ void setup() {
             if (request->hasParam("value")) {
                 current_pwm_duty = request->getParam("value")->value().toInt();
                 Serial.printf("[WEB] Set Relay -> PWM %d%%\n", current_pwm_duty);
-            } else {
-                Serial.printf("[WEB] Set Relay -> PWM %d%% (no value)\n", current_pwm_duty);
             }
         }
     }
@@ -122,7 +141,23 @@ void setup() {
   Serial.println("HTTP server started");
 }
 
-void loop() { /* ... */ }
-void update_relay_state() { /* ... */ }
-// Full bodies for loop, update_relay_state, and status handler are omitted for brevity
-// They are the same as the previous correct versions.
+void loop() {
+  ButtonAction action = input_check();
+  if (action != ACTION_NONE) {
+    Serial.printf("Button Action: %d\n", action);
+  }
+  if (millis() - last_display_update > 100) {
+    display_set_rpm(engine_simulator_get_current_rpm());
+    display_set_wifi_status(WiFi.status() == WL_CONNECTED, WiFi.localIP().toString());
+    display_update();
+    last_display_update = millis();
+  }
+}
+
+void update_relay_state() {
+    switch(current_relay_mode) {
+        case RELAY_OFF: ledcWrite(PWM_CHANNEL, 0); break;
+        case RELAY_ON: ledcWrite(PWM_CHANNEL, 255); break;
+        case RELAY_PWM: ledcWrite(PWM_CHANNEL, map(current_pwm_duty, 0, 100, 0, 255)); break;
+    }
+}
