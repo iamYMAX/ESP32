@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Web Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ESP32 Control Panel</h1>
+            <p>Управление GPIO пинами и светодиодом</p>
+        </header>
+        <main class="controls">
+            <!-- Карточки управления будут добавлены сюда динамически из app.js -->
+            <!-- Пример статической карточки -->
+            <!--
+            <div class="control-card">
+                <h2>Built-in LED</h2>
+                <label class="switch">
+                    <input type="checkbox" data-pin="2">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            -->
+        </main>
+        <footer>
+            <p>ESP32 Async Web Server</p>
+        </footer>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
