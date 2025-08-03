@@ -102,12 +102,15 @@ void setup() {
       int pinNumber = request->getParam("pin")->value().toInt();
       bool pinState = request->getParam("state")->value().toInt() == 1;
 
+      Serial.printf("[WEB] Toggle request received for pin %d to state %d\n", pinNumber, pinState);
+
       bool pinFound = false;
       for (int i = 0; i < numPins; i++) {
         if (pins[i].pin == pinNumber) {
           pins[i].state = pinState;
           updatePin(i);
           pinFound = true;
+          Serial.printf("  > Pin %d (%s) state updated.\n", pins[i].pin, pins[i].name);
           break;
         }
       }
@@ -115,9 +118,11 @@ void setup() {
       if (pinFound) {
         request->send(200, "text/plain", "OK");
       } else {
+        Serial.printf("  > Pin %d not found in config.\n", pinNumber);
         request->send(400, "text/plain", "Pin not found");
       }
     } else {
+      Serial.println("[WEB] Toggle request missing parameters.");
       request->send(400, "text/plain", "Missing parameters");
     }
   });
