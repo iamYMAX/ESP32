@@ -15,9 +15,9 @@ const char* password = "YOUR_WIFI_PASSWORD";
 #define CRANK_SIGNAL_PIN 22
 #define IGNITION_PIN 23
 #define RELAY_PIN 25
-#define BTN_UP_PIN 32
-#define BTN_DOWN_PIN 33
-#define BTN_SELECT_PIN 34
+#define BTN_UP_PIN 13
+#define BTN_DOWN_PIN 14
+#define BTN_SELECT_PIN 15
 
 // ... (PWM, GpioPin struct, RelayMode enum, etc. - без изменений) ...
 #define PWM_CHANNEL 0
