@@ -2,6 +2,7 @@
 
 // --- Конфигурация и переменные модуля ---
 #define DEGREES_PER_REVOLUTION 360
+#define ISR_FREQUENCY_HZ 100000 // 100kHz
 #define TIMER_RESOLUTION_HZ 1000000 // 1MHz, 1 тик = 1 микросекунда
 
 // Пины
@@ -43,7 +44,8 @@ void engine_simulator_init(uint8_t _crank_pin, uint8_t _ignition_pin) {
     digitalWrite(crank_pin, LOW);
     digitalWrite(ignition_pin, LOW);
 
-    engine_timer = timerBegin(0, 80, true); // Таймер 0, делитель 80 -> 1МГц
+    // Таймер 1 (на ядре 1), делитель 80 -> 1МГц разрешение
+    engine_timer = timerBegin(1, 80, true);
     timerAttachInterrupt(engine_timer, &onEngineTimer, true);
 
     engine_simulator_set_rpm(0); // По умолчанию выключен
@@ -58,16 +60,18 @@ void engine_simulator_set_rpm(int rpm) {
         return;
     }
 
-    // Расчет изменения угла за 1 микросекунду
+    // Расчет изменения угла за один тик ISR
     float deg_per_second = rpm * (DEGREES_PER_REVOLUTION / 60.0);
-    angle_per_tick = deg_per_second / TIMER_RESOLUTION_HZ;
+    angle_per_tick = deg_per_second / ISR_FREQUENCY_HZ;
 
     // Расчет времени накопления в градусах
     float dwell_time_sec = dwell_time_ms / 1000.0;
     float dwell_angle = dwell_time_sec * deg_per_second;
     dwell_start_angle = ignition_angle_btdc + dwell_angle;
 
-    timerAlarmWrite(engine_timer, 1, true); // Прерывание каждую микросекунду
+    // Устанавливаем таймер на новую частоту
+    uint64_t alarm_value = TIMER_RESOLUTION_HZ / ISR_FREQUENCY_HZ;
+    timerAlarmWrite(engine_timer, alarm_value, true);
     timerAlarmEnable(engine_timer);
 }
 
