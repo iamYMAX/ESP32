@@ -35,8 +35,9 @@ AsyncWebServer server(80);
 
 // Инициализация файловой системы LittleFS
 void initLittleFS() {
-  if (!LittleFS.begin()) {
-    Serial.println("An error has occurred while mounting LittleFS");
+  if (!LittleFS.begin(true)) { // true = format if mount failed
+    Serial.println("FATAL: LittleFS Mount Failed. Check partition scheme.");
+    return;
   }
   Serial.println("LittleFS mounted successfully");
 }
