@@ -114,6 +114,7 @@ void setup() {
     if (request->hasParam("pin") && request->hasParam("state")) {
       int pinNumber = request->getParam("pin")->value().toInt();
       bool pinState = request->getParam("state")->value().toInt() == 1;
+      Serial.printf("[WEB] GPIO Toggle: Pin %d -> State %d\n", pinNumber, pinState);
       for (int i = 0; i < num_gpio_pins; i++) {
         if (gpio_pins[i].pin == pinNumber) {
           gpio_pins[i].state = pinState;
@@ -130,6 +131,7 @@ void setup() {
   server.on("/set_rpm", HTTP_GET, [](AsyncWebServerRequest *request){
     if (request->hasParam("value")) {
       int rpm = request->getParam("value")->value().toInt();
+      Serial.printf("[WEB] Set RPM: %d\n", rpm);
       crank_signal_set_rpm(rpm);
       request->send(200, "text/plain", "OK");
     } else {
@@ -141,6 +143,7 @@ void setup() {
   server.on("/set_pattern", HTTP_GET, [](AsyncWebServerRequest *request){
     if (request->hasParam("pattern")) {
       const char* pattern_name = request->getParam("pattern")->value().c_str();
+      Serial.printf("[WEB] Set Pattern: %s\n", pattern_name);
       if (crank_signal_set_pattern(pattern_name)) {
         request->send(200, "text/plain", "OK");
       } else {
