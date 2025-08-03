@@ -196,7 +196,7 @@ input:checked + .slider:before {
     cursor: pointer;
 }
 
-#rpm-value {
+#rpm-value, #dwell-value, #angle-value, #pwm-value {
     font-weight: bold;
     color: var(--switch-slider-checked);
 }

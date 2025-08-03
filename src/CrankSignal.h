@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+// --- Типы и константы ---
+
 // Структура для хранения параметров паттерна коленвала
 struct CrankPattern {
     const char* name;
@@ -10,29 +12,23 @@ struct CrankPattern {
     int missing_teeth;
 };
 
-// Поддерживаемые паттерны
-const CrankPattern patterns[] = {
-    {"60-2", 60, 2},
-    {"36-1", 36, 1},
-    {"36-2", 36, 2},
-    {"12-1", 12, 1}
-};
-const int num_patterns = sizeof(patterns) / sizeof(patterns[0]);
-
 // --- Публичные функции ---
 
-// Инициализация генератора
-void crank_signal_init(uint8_t output_pin);
+// Инициализация модуля
+void engine_simulator_init(uint8_t crank_pin, uint8_t ignition_pin);
 
-// Установка нового паттерна по имени
-bool crank_signal_set_pattern(const char* pattern_name);
+// Управление генератором ДПКВ
+bool engine_simulator_set_pattern(const char* pattern_name);
+void engine_simulator_set_rpm(int rpm);
 
-// Установка оборотов в минуту
-void crank_signal_set_rpm(int rpm);
+// Управление зажиганием
+void engine_simulator_set_dwell_time(float milliseconds);
+void engine_simulator_set_ignition_angle(int degrees_btdc);
 
-// Получение текущих параметров
-const char* crank_signal_get_current_pattern_name();
-int crank_signal_get_current_rpm();
-
+// Функции для получения текущего статуса
+const char* engine_simulator_get_current_pattern_name();
+int engine_simulator_get_current_rpm();
+float engine_simulator_get_current_dwell_time();
+int engine_simulator_get_current_ignition_angle();
 
 #endif // CRANK_SIGNAL_H

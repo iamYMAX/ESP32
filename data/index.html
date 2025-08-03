@@ -36,6 +36,34 @@
                     </select>
                 </div>
             </section>
+
+            <section class="generator-card">
+                <h2>Управление зажиганием</h2>
+                <div class="generator-control">
+                    <label for="dwell-time-input">Время накопления (Dwell), мс: <span id="dwell-value">3.0</span></label>
+                    <input type="range" min="1.0" max="8.0" value="3.0" step="0.1" class="rpm-slider" id="dwell-time-input">
+                </div>
+                <div class="generator-control">
+                    <label for="ignition-angle-input">УОЗ (градусы до ВМТ): <span id="angle-value">10</span></label>
+                    <input type="range" min="0" max="45" value="10" class="rpm-slider" id="ignition-angle-input">
+                </div>
+            </section>
+
+            <section class="generator-card">
+                <h2>Управление реле генератора</h2>
+                <div class="generator-control">
+                    <label for="relay-mode-select">Режим:</label>
+                    <select name="relay-modes" id="relay-mode-select">
+                        <option value="off">Выключено (OFF)</option>
+                        <option value="on">Включено (ON)</option>
+                        <option value="pwm">ШИМ (PWM)</option>
+                    </select>
+                </div>
+                <div class="generator-control" id="pwm-control-section" style="display: none;">
+                    <label for="pwm-duty-slider">Скважность ШИМ (%): <span id="pwm-value">50</span></label>
+                    <input type="range" min="0" max="100" value="50" class="rpm-slider" id="pwm-duty-slider">
+                </div>
+            </section>
         </main>
         <footer>
             <p>ESP32 Async Web Server</p>
