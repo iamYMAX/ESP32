@@ -98,12 +98,12 @@ void setup() {
     if (request->hasParam("dwell")) {
         float dwell = request->getParam("dwell")->value().toFloat();
         Serial.printf("[WEB] Set Dwell -> %.1f ms\n", dwell);
-        engine_simulator_set_dwell_time(dwell);
+        engine_simulator_set_dwell_time_ms(dwell);
     }
     if (request->hasParam("angle")) {
         int angle = request->getParam("angle")->value().toInt();
         Serial.printf("[WEB] Set Angle -> %d deg\n", angle);
-        engine_simulator_set_ignition_angle(angle);
+        engine_simulator_set_ignition_angle_btdc(angle);
     }
     request->send(200);
   });
