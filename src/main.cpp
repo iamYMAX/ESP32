@@ -47,6 +47,12 @@ void setup() {
   LittleFS.begin(true);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
+  Serial.print("Connecting to WiFi...");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi Connected: " + WiFi.localIP().toString());
   // Web server routes... (опущены для краткости)
   server.begin();
   Serial.println("HTTP server started");
