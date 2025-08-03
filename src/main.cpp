@@ -85,11 +85,14 @@ void setup() {
 
   // API для получения статуса всех пинов
   server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request){
-    JSONVar json;
+    StaticJsonDocument<256> jsonDoc;
+    JsonObject root = jsonDoc.to<JsonObject>();
     for (int i = 0; i < numPins; i++) {
-      json[String(pins[i].pin)] = pins[i].state;
+      root[String(pins[i].pin)] = pins[i].state;
     }
-    request->send(200, "application/json", JSON.stringify(json));
+    String output;
+    serializeJson(jsonDoc, output);
+    request->send(200, "application/json", output);
   });
 
   // API для переключения пинов
