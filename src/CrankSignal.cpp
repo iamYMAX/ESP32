@@ -41,12 +41,14 @@ void engine_simulator_init(uint8_t _crank_pin, uint8_t _ignition_pin) {
 }
 
 void engine_simulator_set_rpm(uint16_t rpm) {
+    // Атомарно обновляем параметры, отключая прерывание на время расчетов
+    timerAlarmDisable(engine_timer);
+
     current_rpm = rpm;
     if (rpm == 0) {
-        timerAlarmDisable(engine_timer);
         digitalWrite(crank_pin, LOW);
         digitalWrite(ignition_pin, LOW);
-        return;
+        return; // Оставляем таймер выключенным
     }
 
     uint64_t total_angle_per_min = (uint64_t)rpm * ENG_DEGREES_PER_REV;
@@ -55,6 +57,10 @@ void engine_simulator_set_rpm(uint16_t rpm) {
 
     float dwell_sec = current_dwell_ms / 1000.0f;
     dwell_angle_res = (uint32_t)(dwell_sec * total_angle_per_sec);
+
+    // Сбрасываем угол и состояние, чтобы избежать глитчей при смене оборотов
+    current_angle_res = 0;
+    is_dwelling = false;
 
     timerAlarmEnable(engine_timer);
 }
