@@ -2,7 +2,7 @@
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
-#include <Arduino_JSON.h>
+#include <ArduinoJson.h>
 
 // ЗАМЕНИТЕ НА ВАШИ ДАННЫЕ
 const char* ssid = "YOUR_WIFI_SSID";
