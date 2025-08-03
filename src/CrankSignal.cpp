@@ -117,9 +117,11 @@ void IRAM_ATTR onEngineTimer() {
     if (current_tooth_index >= missing_teeth_start_index) {
         digitalWrite(crank_pin, LOW);
     } else {
-        // Сигнал 50/50
-        float phase_in_tooth = fmod(current_angle_deg, tooth_angle);
-        digitalWrite(crank_pin, phase_in_tooth < (tooth_angle / 2));
+        // Сигнал 50/50 - безопасная версия без fmod()
+        int current_tooth_int = (int)current_tooth_index;
+        float start_of_this_tooth_angle = current_tooth_int * tooth_angle;
+        float phase_in_tooth = current_angle_deg - start_of_this_tooth_angle;
+        digitalWrite(crank_pin, phase_in_tooth < (tooth_angle / 2.0f));
     }
 
     // 3. Управляем зажиганием
