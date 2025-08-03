@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <WiFi.hh>
+#include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include "CrankSignal.h"
