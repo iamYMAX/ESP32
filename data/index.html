@@ -12,21 +12,30 @@
 <body>
     <div class="container">
         <header>
-            <h1>ESP32 Control Panel</h1>
-            <p>Управление GPIO пинами и светодиодом</p>
+            <h1>ESP32 Advanced Control</h1>
+            <p>Управление GPIO и генератор сигнала ДПКВ</p>
         </header>
-        <main class="controls">
-            <!-- Карточки управления будут добавлены сюда динамически из app.js -->
-            <!-- Пример статической карточки -->
-            <!--
-            <div class="control-card">
-                <h2>Built-in LED</h2>
-                <label class="switch">
-                    <input type="checkbox" data-pin="2">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            -->
+        <main>
+            <section class="controls">
+                <!-- Карточки управления GPIO будут добавлены сюда динамически -->
+            </section>
+
+            <section class="generator-card">
+                <h2>Генератор сигнала коленвала (ДПКВ)</h2>
+                <div class="generator-control">
+                    <label for="rpm-slider">Обороты (RPM): <span id="rpm-value">0</span></label>
+                    <input type="range" min="0" max="6000" value="0" class="rpm-slider" id="rpm-slider">
+                </div>
+                <div class="generator-control">
+                    <label for="pattern-select">Тип шкива:</label>
+                    <select name="patterns" id="pattern-select">
+                        <option value="60-2">60-2</option>
+                        <option value="36-1">36-1</option>
+                        <option value="36-2">36-2</option>
+                        <option value="12-1">12-1</option>
+                    </select>
+                </div>
+            </section>
         </main>
         <footer>
             <p>ESP32 Async Web Server</p>
