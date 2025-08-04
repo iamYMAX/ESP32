@@ -20,7 +20,6 @@ const char* password = "YOUR_WIFI_PASSWORD";
 #define PWM_RESOLUTION 8
 
 // --- Глобальные объекты и состояния ---
-struct GpioPin { const uint8_t pin; const char* name; bool state; };
 GpioPin gpio_pins[] = {{2, "LED", false}, {18, "P18", false}, {19, "P19", false}, {21, "P21", false}};
 const int num_gpio_pins = sizeof(gpio_pins) / sizeof(gpio_pins[0]);
 enum RelayMode { RELAY_OFF, RELAY_ON, RELAY_PWM };
@@ -164,6 +163,7 @@ void loop() {
   if (millis() - last_display_update > 100) {
     display_set_rpm(engine_simulator_get_current_rpm());
     display_set_wifi_status(WiFi.status() == WL_CONNECTED, WiFi.localIP().toString());
+    display_set_gpio_pins(gpio_pins, num_gpio_pins);
     display_update();
     last_display_update = millis();
   }

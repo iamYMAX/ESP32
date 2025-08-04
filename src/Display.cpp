@@ -10,6 +10,8 @@ U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0);
 static int current_rpm = 0;
 static bool wifi_connected = false;
 static String ip_address = "N/A";
+static const GpioPin* gpio_pins_ptr = NULL;
+static int num_gpio_pins = 0;
 
 // --- Log Buffer ---
 #define LOG_BUFFER_SIZE 4
@@ -85,6 +87,11 @@ void display_add_log(String message) {
     }
 }
 
+void display_set_gpio_pins(const GpioPin* pins, int count) {
+    gpio_pins_ptr = pins;
+    num_gpio_pins = count;
+}
+
 
 // --- Функции отрисовки экранов ---
 
@@ -114,8 +121,18 @@ void draw_main_status_screen() {
 
 void draw_gpio_status_screen() {
     u8g2.setFont(u8g2_font_profont11_tf);
-    u8g2.drawStr(0, 10, "GPIOs: [1] [2] [3] [4]");
-    // Здесь будет логика отображения состояния пинов
+    u8g2.drawStr(0, 10, "GPIO Status:");
+
+    if (gpio_pins_ptr != NULL) {
+        char pin_buf[32];
+        for (int i = 0; i < num_gpio_pins; i++) {
+            sprintf(pin_buf, "%s: %s", gpio_pins_ptr[i].name, gpio_pins_ptr[i].state ? "ON" : "OFF");
+            // Display 2 pins per line
+            u8g2.drawStr((i % 2) * 64, 20 + (i / 2) * 10, pin_buf);
+        }
+    } else {
+        u8g2.drawStr(0, 20, "No data");
+    }
 
     // Подсказка
     u8g2.drawStr(0, 32, "-> Next");
