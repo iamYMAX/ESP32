@@ -116,7 +116,7 @@ void draw_main_status_screen() {
     }
 
     // Подсказка
-    u8g2.drawStr(0, 32, "-> Next");
+    u8g2.drawStr(0, 31, "-> Next");
 }
 
 void draw_gpio_status_screen() {
@@ -135,7 +135,7 @@ void draw_gpio_status_screen() {
     }
 
     // Подсказка
-    u8g2.drawStr(0, 32, "-> Next");
+    u8g2.drawStr(0, 31, "-> Next");
 }
 
 void draw_log_screen() {
@@ -150,7 +150,7 @@ void draw_log_screen() {
         u8g2.drawStr(0, 18 + i * 8, log_buffer[buffer_i].c_str());
     }
 
-    u8g2.drawStr(0, 32, "-> Next");
+    u8g2.drawStr(0, 31, "-> Next");
 }
 
 void display_next_screen() {
