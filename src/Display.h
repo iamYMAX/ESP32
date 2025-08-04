@@ -14,6 +14,8 @@ void display_update();
 // Функции для передачи данных на дисплей
 void display_set_rpm(int rpm);
 void display_set_wifi_status(bool connected, String ip_addr);
+void display_add_log(String message);
+void display_next_screen();
 // ... другие сеттеры по мере необходимости ...
 
 #endif // DISPLAY_H

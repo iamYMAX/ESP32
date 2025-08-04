@@ -30,6 +30,18 @@ AsyncWebServer server(80);
 
 unsigned long last_display_update = 0;
 
+// --- Logging Helper ---
+void log_message(const char* format, ...) {
+    char buf[256];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(buf, sizeof(buf), format, args);
+    va_end(args);
+
+    Serial.print(buf);
+    display_add_log(String(buf));
+}
+
 void update_relay_state();
 
 void setup() {
@@ -79,7 +91,7 @@ void setup() {
     if (request->hasParam("pin") && request->hasParam("state")) {
       int pin = request->getParam("pin")->value().toInt();
       bool state = request->getParam("state")->value().toInt() == 1;
-      Serial.printf("[WEB] Toggle GPIO %d -> %s\n", pin, state ? "ON" : "OFF");
+      log_message("[WEB] Toggle GPIO %d -> %s\n", pin, state ? "ON" : "OFF");
       for (int i = 0; i < num_gpio_pins; i++) {
         if (gpio_pins[i].pin == pin) {
           gpio_pins[i].state = state; // <--- ВАЖНОЕ ИСПРАВЛЕНИЕ
@@ -94,14 +106,14 @@ void setup() {
 
   server.on("/set_rpm", HTTP_GET, [](AsyncWebServerRequest *r){
     int rpm = r->getParam("value")->value().toInt();
-    Serial.printf("[WEB] Set RPM -> %d\n", rpm);
+    log_message("[WEB] Set RPM -> %d\n", rpm);
     engine_simulator_set_rpm(rpm);
     r->send(200);
   });
 
   server.on("/set_pattern", HTTP_GET, [](AsyncWebServerRequest *r){
     const char* p_name = r->getParam("pattern")->value().c_str();
-    Serial.printf("[WEB] Set Pattern -> %s\n", p_name);
+    log_message("[WEB] Set Pattern -> %s\n", p_name);
     engine_simulator_set_pattern(p_name);
     r->send(200);
   });
@@ -109,12 +121,12 @@ void setup() {
   server.on("/set_ignition_params", HTTP_GET, [](AsyncWebServerRequest *request){
     if (request->hasParam("dwell")) {
         float dwell = request->getParam("dwell")->value().toFloat();
-        Serial.printf("[WEB] Set Dwell -> %.1f ms\n", dwell);
+        log_message("[WEB] Set Dwell -> %.1f ms\n", dwell);
         engine_simulator_set_dwell_time_ms(dwell);
     }
     if (request->hasParam("angle")) {
         int angle = request->getParam("angle")->value().toInt();
-        Serial.printf("[WEB] Set Angle -> %d deg\n", angle);
+        log_message("[WEB] Set Angle -> %d deg\n", angle);
         engine_simulator_set_ignition_angle_btdc(angle);
     }
     request->send(200);
@@ -123,13 +135,13 @@ void setup() {
   server.on("/set_relay_mode", HTTP_GET, [](AsyncWebServerRequest *request){
     if (request->hasParam("mode")) {
         String mode = request->getParam("mode")->value();
-        if (mode == "off") { current_relay_mode = RELAY_OFF; Serial.println("[WEB] Set Relay -> OFF"); }
-        else if (mode == "on") { current_relay_mode = RELAY_ON; Serial.println("[WEB] Set Relay -> ON"); }
+        if (mode == "off") { current_relay_mode = RELAY_OFF; log_message("[WEB] Set Relay -> OFF\n"); }
+        else if (mode == "on") { current_relay_mode = RELAY_ON; log_message("[WEB] Set Relay -> ON\n"); }
         else if (mode == "pwm") {
             current_relay_mode = RELAY_PWM;
             if (request->hasParam("value")) {
                 current_pwm_duty = request->getParam("value")->value().toInt();
-                Serial.printf("[WEB] Set Relay -> PWM %d%%\n", current_pwm_duty);
+                log_message("[WEB] Set Relay -> PWM %d%%\n", current_pwm_duty);
             }
         }
     }
@@ -138,13 +150,16 @@ void setup() {
   });
 
   server.begin();
-  Serial.println("HTTP server started");
+  log_message("HTTP server started\n");
 }
 
 void loop() {
   ButtonAction action = input_check();
-  if (action != ACTION_NONE) {
-    Serial.printf("Button Action: %d\n", action);
+  if (action == ACTION_SELECT) {
+    log_message("Button: Select\n");
+    display_next_screen();
+  } else if (action != ACTION_NONE) {
+    log_message("Button Action: %d\n", action);
   }
   if (millis() - last_display_update > 100) {
     display_set_rpm(engine_simulator_get_current_rpm());

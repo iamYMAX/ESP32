@@ -11,11 +11,18 @@ static int current_rpm = 0;
 static bool wifi_connected = false;
 static String ip_address = "N/A";
 
+// --- Log Buffer ---
+#define LOG_BUFFER_SIZE 4
+static String log_buffer[LOG_BUFFER_SIZE];
+static int log_buffer_index = 0;
+static bool log_buffer_full = false;
+
 // Перечисление для экранов меню
 enum MenuScreen {
     SCREEN_BOOT,
     SCREEN_MAIN_STATUS,
-    SCREEN_GPIO_STATUS
+    SCREEN_GPIO_STATUS,
+    SCREEN_LOG
 };
 static MenuScreen current_screen = SCREEN_BOOT;
 
@@ -23,6 +30,7 @@ static MenuScreen current_screen = SCREEN_BOOT;
 void draw_boot_screen();
 void draw_main_status_screen();
 void draw_gpio_status_screen();
+void draw_log_screen();
 
 
 // --- Реализация публичных функций ---
@@ -46,6 +54,9 @@ void display_update() {
             case SCREEN_GPIO_STATUS:
                 draw_gpio_status_screen();
                 break;
+            case SCREEN_LOG:
+                draw_log_screen();
+                break;
         }
     } while (u8g2.nextPage());
 
@@ -63,6 +74,15 @@ void display_set_rpm(int rpm) {
 void display_set_wifi_status(bool connected, String ip_addr) {
     wifi_connected = connected;
     ip_address = ip_addr;
+}
+
+void display_add_log(String message) {
+    log_buffer[log_buffer_index] = message;
+    log_buffer_index++;
+    if (log_buffer_index >= LOG_BUFFER_SIZE) {
+        log_buffer_index = 0;
+        log_buffer_full = true;
+    }
 }
 
 
@@ -89,7 +109,7 @@ void draw_main_status_screen() {
     }
 
     // Подсказка
-    u8g2.drawStr(0, 32, "-> GPIO Status");
+    u8g2.drawStr(0, 32, "-> Next");
 }
 
 void draw_gpio_status_screen() {
@@ -98,5 +118,30 @@ void draw_gpio_status_screen() {
     // Здесь будет логика отображения состояния пинов
 
     // Подсказка
-    u8g2.drawStr(0, 32, "-> Main Status");
+    u8g2.drawStr(0, 32, "-> Next");
+}
+
+void draw_log_screen() {
+    u8g2.setFont(u8g2_font_profont10_tf);
+    u8g2.drawStr(0, 8, "--- Log ---");
+
+    int start_index = log_buffer_full ? log_buffer_index : 0;
+    int count = log_buffer_full ? LOG_BUFFER_SIZE : log_buffer_index;
+
+    for (int i = 0; i < count; i++) {
+        int buffer_i = (start_index + i) % LOG_BUFFER_SIZE;
+        u8g2.drawStr(0, 18 + i * 8, log_buffer[buffer_i].c_str());
+    }
+
+    u8g2.drawStr(0, 32, "-> Next");
+}
+
+void display_next_screen() {
+    if (current_screen == SCREEN_MAIN_STATUS) {
+        current_screen = SCREEN_GPIO_STATUS;
+    } else if (current_screen == SCREEN_GPIO_STATUS) {
+        current_screen = SCREEN_LOG;
+    } else if (current_screen == SCREEN_LOG) {
+        current_screen = SCREEN_MAIN_STATUS;
+    }
 }
