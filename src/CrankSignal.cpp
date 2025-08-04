@@ -96,7 +96,24 @@ bool engine_simulator_set_pattern(const char* name) {
 void engine_simulator_set_dwell_time_ms(float ms) { current_dwell_ms = ms; recalculate_params(); }
 void engine_simulator_set_ignition_angle_btdc(uint16_t degrees) { ignition_angle_btdc = degrees; recalculate_params(); }
 
-// ... функции get ...
+// --- Функции для получения статуса ---
+
+const char* engine_simulator_get_current_pattern_name() {
+    return current_pattern->name;
+}
+
+uint16_t engine_simulator_get_current_rpm() {
+    return current_rpm;
+}
+
+float engine_simulator_get_current_dwell_time_ms() {
+    return current_dwell_ms;
+}
+
+uint16_t engine_simulator_get_current_ignition_angle_btdc() {
+    return ignition_angle_btdc;
+}
+
 
 void IRAM_ATTR onEngineTimer() {
     current_angle_res += angle_per_tick_res;
@@ -120,4 +137,3 @@ void IRAM_ATTR onEngineTimer() {
         is_dwelling = false;
     }
 }
-// ... (getters omitted for brevity)
