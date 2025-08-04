@@ -93,8 +93,19 @@ bool engine_simulator_set_pattern(const char* name) {
     return false;
 }
 
-void engine_simulator_set_dwell_time_ms(float ms) { current_dwell_ms = ms; recalculate_params(); }
-void engine_simulator_set_ignition_angle_btdc(uint16_t degrees) { ignition_angle_btdc = degrees; recalculate_params(); }
+void engine_simulator_set_dwell_time_ms(float ms) {
+    timerAlarmDisable(engine_timer);
+    current_dwell_ms = ms;
+    recalculate_params();
+    if (current_rpm > 0) timerAlarmEnable(engine_timer);
+}
+
+void engine_simulator_set_ignition_angle_btdc(uint16_t degrees) {
+    timerAlarmDisable(engine_timer);
+    ignition_angle_btdc = degrees;
+    recalculate_params();
+    if (current_rpm > 0) timerAlarmEnable(engine_timer);
+}
 
 // --- Функции для получения статуса ---
 
