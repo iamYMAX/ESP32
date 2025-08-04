@@ -4,7 +4,7 @@
 // --- Конфигурация ---
 // Используем стандартные пины I2C для ESP32: SDA=21, SCL=22
 // Если у вас другие, их нужно будет указать в конструкторе.
-U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0);
+U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0);
 
 // --- Переменные состояния дисплея ---
 static int current_rpm = 0;
@@ -97,7 +97,7 @@ void display_set_gpio_pins(const GpioPin* pins, int count) {
 
 void draw_boot_screen() {
     u8g2.drawStr(10, 22, "ECU Simulator");
-    u8g2.drawStr(45, 31, "v2.0");
+    u8g2.drawStr(45, 28, "v2.0");
 }
 
 void draw_main_status_screen() {
@@ -116,7 +116,7 @@ void draw_main_status_screen() {
     }
 
     // Подсказка
-    u8g2.drawStr(0, 31, "-> Next");
+    u8g2.drawStr(0, 28, "-> Next");
 }
 
 void draw_gpio_status_screen() {
@@ -135,7 +135,7 @@ void draw_gpio_status_screen() {
     }
 
     // Подсказка
-    u8g2.drawStr(0, 31, "-> Next");
+    u8g2.drawStr(0, 28, "-> Next");
 }
 
 void draw_log_screen() {
@@ -150,7 +150,7 @@ void draw_log_screen() {
         u8g2.drawStr(0, 18 + i * 8, log_buffer[buffer_i].c_str());
     }
 
-    u8g2.drawStr(0, 31, "-> Next");
+    u8g2.drawStr(0, 28, "-> Next");
 }
 
 void display_next_screen() {
