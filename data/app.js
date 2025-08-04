@@ -25,6 +25,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const pwmSlider = document.getElementById('pwm-duty-slider');
     const pwmValueSpan = document.getElementById('pwm-value');
 
+    // --- Элементы управления дисплеем ---
+    const nextScreenBtn = document.getElementById('next-screen-btn');
+
 
     // --- Инициализация ---
     // Создаем карточки GPIO
@@ -108,6 +111,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     pwmSlider.addEventListener('input', () => { pwmValueSpan.textContent = pwmSlider.value; });
     pwmSlider.addEventListener('change', () => { sendCommand(`/set_relay_mode?mode=pwm&value=${pwmSlider.value}`); });
+
+    // Display
+    nextScreenBtn.addEventListener('click', () => { sendCommand('/next_screen'); });
 
 
     // --- Вспомогательные функции ---

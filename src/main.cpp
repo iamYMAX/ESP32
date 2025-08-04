@@ -148,6 +148,12 @@ void setup() {
     request->send(200);
   });
 
+  server.on("/next_screen", HTTP_GET, [](AsyncWebServerRequest *request){
+    log_message("[WEB] Next Screen\n");
+    display_next_screen();
+    request->send(200);
+  });
+
   server.begin();
   log_message("HTTP server started\n");
 }
