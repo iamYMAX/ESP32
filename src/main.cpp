@@ -9,7 +9,7 @@
 // --- Конфигурация и Пины ---
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
-#define CRANK_SIGNAL_PIN 22
+#define CRANK_SIGNAL_PIN 17
 #define IGNITION_PIN 23
 #define RELAY_PIN 25
 #define BTN_UP_PIN 13
