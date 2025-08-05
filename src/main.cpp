@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <WiFiManager.h>
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include "CrankSignal.h"
@@ -7,8 +8,6 @@
 #include "Input.h"
 
 // --- Конфигурация и Пины ---
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
 #define CRANK_SIGNAL_PIN 17
 #define IGNITION_PIN 23
 #define RELAY_PIN 25
@@ -54,11 +53,18 @@ void setup() {
   update_relay_state();
   engine_simulator_init(CRANK_SIGNAL_PIN, IGNITION_PIN);
   LittleFS.begin(true);
+
   WiFi.mode(WIFI_STA);
-  WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi...");
-  while (WiFi.status() != WL_CONNECTED) { delay(500); Serial.print("."); }
-  Serial.println("\nWiFi Connected: " + WiFi.localIP().toString());
+  WiFiManager wm;
+  // wm.resetSettings(); // Раскомментируйте для сброса настроек WiFi
+  bool res = wm.autoConnect("ECU-Simulator-AP");
+  if(!res) {
+    Serial.println("Failed to connect");
+    // ESP.restart();
+  }
+  else {
+    Serial.println("WiFi Connected: " + WiFi.localIP().toString());
+  }
 
   // --- Веб-сервер ---
   server.on("/", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/index.html", "text/html"); });

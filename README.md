@@ -35,10 +35,17 @@ This project turns an ESP32 into a versatile tool for automotive diagnostics and
 
 ## Usage
 
+### Wi-Fi Setup (First Time)
+1.  On first boot, or if it can't connect to a known network, the ESP32 will create its own Wi-Fi network called **"ECU-Simulator-AP"**.
+2.  Connect to this network with your phone or computer.
+3.  A captive portal page should open automatically. If not, open a web browser and navigate to `192.168.4.1`.
+4.  On the portal page, click "Configure WiFi", select your home network from the list, enter your password, and click "Save".
+5.  The ESP32 will save the credentials and restart, connecting automatically to your network from now on.
+
 ### Web Interface
-1.  Connect the ESP32 to your Wi-Fi network by editing the `ssid` and `password` in `src/main.cpp`.
-2.  The ESP32's IP address will be printed to the Serial Monitor on startup and will also be shown on the OLED display.
-3.  Open a web browser and navigate to the IP address of the ESP32.
+Once connected to your network:
+1.  The ESP32's IP address will be printed to the Serial Monitor on startup and will also be shown on the OLED display.
+2.  Open a web browser and navigate to the IP address of the ESP32.
 
 The web interface allows you to:
 - **Toggle GPIO Pins:** Turn the four general-purpose output pins ON or OFF.
