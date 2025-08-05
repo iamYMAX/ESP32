@@ -24,7 +24,7 @@ const int num_gpio_pins = sizeof(gpio_pins) / sizeof(gpio_pins[0]);
 enum RelayMode { RELAY_OFF, RELAY_ON, RELAY_PWM };
 RelayMode current_relay_mode = RELAY_OFF;
 int current_pwm_duty = 50;
-AsyncWebServer server(80);
+AsyncWebServer *server = NULL;
 
 unsigned long last_display_update = 0;
 
@@ -66,12 +66,14 @@ void setup() {
     Serial.println("WiFi Connected: " + WiFi.localIP().toString());
   }
 
-  // --- Веб-сервер ---
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/index.html", "text/html"); });
-  server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/style.css", "text/css"); });
-  server.on("/app.js", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/app.js", "text/javascript"); });
+  server = new AsyncWebServer(80);
 
-  server.on("/status", HTTP_GET, [](AsyncWebServerRequest *request){
+  // --- Веб-сервер ---
+  server->on("/", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/index.html", "text/html"); });
+  server->on("/style.css", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/style.css", "text/css"); });
+  server->on("/app.js", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/app.js", "text/javascript"); });
+
+  server->on("/status", HTTP_GET, [](AsyncWebServerRequest *request){
     String json = "{";
     json += "\"gpio\":{";
     for (int i = 0; i < num_gpio_pins; i++) {
@@ -92,7 +94,7 @@ void setup() {
     request->send(200, "application/json", json);
   });
 
-  server.on("/toggle", HTTP_GET, [](AsyncWebServerRequest *request){
+  server->on("/toggle", HTTP_GET, [](AsyncWebServerRequest *request){
     if (request->hasParam("pin") && request->hasParam("state")) {
       int pin = request->getParam("pin")->value().toInt();
       bool state = request->getParam("state")->value().toInt() == 1;
@@ -109,21 +111,21 @@ void setup() {
     request->send(400);
   });
 
-  server.on("/set_rpm", HTTP_GET, [](AsyncWebServerRequest *r){
+  server->on("/set_rpm", HTTP_GET, [](AsyncWebServerRequest *r){
     int rpm = r->getParam("value")->value().toInt();
     log_message("[WEB] Set RPM -> %d\n", rpm);
     engine_simulator_set_rpm(rpm);
     r->send(200);
   });
 
-  server.on("/set_pattern", HTTP_GET, [](AsyncWebServerRequest *r){
+  server->on("/set_pattern", HTTP_GET, [](AsyncWebServerRequest *r){
     const char* p_name = r->getParam("pattern")->value().c_str();
     log_message("[WEB] Set Pattern -> %s\n", p_name);
     engine_simulator_set_pattern(p_name);
     r->send(200);
   });
 
-  server.on("/set_ignition_params", HTTP_GET, [](AsyncWebServerRequest *request){
+  server->on("/set_ignition_params", HTTP_GET, [](AsyncWebServerRequest *request){
     if (request->hasParam("dwell")) {
         float dwell = request->getParam("dwell")->value().toFloat();
         log_message("[WEB] Set Dwell -> %.1f ms\n", dwell);
@@ -137,7 +139,7 @@ void setup() {
     request->send(200);
   });
 
-  server.on("/set_relay_mode", HTTP_GET, [](AsyncWebServerRequest *request){
+  server->on("/set_relay_mode", HTTP_GET, [](AsyncWebServerRequest *request){
     if (request->hasParam("mode")) {
         String mode = request->getParam("mode")->value();
         if (mode == "off") { current_relay_mode = RELAY_OFF; log_message("[WEB] Set Relay -> OFF\n"); }
@@ -154,13 +156,13 @@ void setup() {
     request->send(200);
   });
 
-  server.on("/next_screen", HTTP_GET, [](AsyncWebServerRequest *request){
+  server->on("/next_screen", HTTP_GET, [](AsyncWebServerRequest *request){
     log_message("[WEB] Next Screen\n");
     display_next_screen();
     request->send(200);
   });
 
-  server.begin();
+  server->begin();
   log_message("HTTP server started\n");
 }
 
