@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -63,6 +64,16 @@
                     <label for="pwm-duty-slider">Скважность ШИМ (%): <span id="pwm-value">50</span></label>
                     <input type="range" min="0" max="100" value="50" class="rpm-slider" id="pwm-duty-slider">
                 </div>
+            </section>
+            <section class="generator-card">
+                <h2>Дисплей</h2>
+                <div class="generator-control">
+                    <button id="next-screen-btn" class="button">Следующий экран</button>
+                </div>
+            </section>
+            <section class="generator-card">
+                <h2>Signal Graph (Pin 5)</h2>
+                <canvas id="signalChart"></canvas>
             </section>
         </main>
         <footer>

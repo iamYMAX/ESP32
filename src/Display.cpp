@@ -10,12 +10,21 @@ U8G2_SSD1306_128X32_UNIVISION_F_HW_I2C u8g2(U8G2_R0);
 static int current_rpm = 0;
 static bool wifi_connected = false;
 static String ip_address = "N/A";
+static const GpioPin* gpio_pins_ptr = NULL;
+static int num_gpio_pins = 0;
+
+// --- Log Buffer ---
+#define LOG_BUFFER_SIZE 4
+static String log_buffer[LOG_BUFFER_SIZE];
+static int log_buffer_index = 0;
+static bool log_buffer_full = false;
 
 // Перечисление для экранов меню
 enum MenuScreen {
     SCREEN_BOOT,
     SCREEN_MAIN_STATUS,
-    SCREEN_GPIO_STATUS
+    SCREEN_GPIO_STATUS,
+    SCREEN_LOG
 };
 static MenuScreen current_screen = SCREEN_BOOT;
 
@@ -23,6 +32,7 @@ static MenuScreen current_screen = SCREEN_BOOT;
 void draw_boot_screen();
 void draw_main_status_screen();
 void draw_gpio_status_screen();
+void draw_log_screen();
 
 
 // --- Реализация публичных функций ---
@@ -46,6 +56,9 @@ void display_update() {
             case SCREEN_GPIO_STATUS:
                 draw_gpio_status_screen();
                 break;
+            case SCREEN_LOG:
+                draw_log_screen();
+                break;
         }
     } while (u8g2.nextPage());
 
@@ -63,6 +76,20 @@ void display_set_rpm(int rpm) {
 void display_set_wifi_status(bool connected, String ip_addr) {
     wifi_connected = connected;
     ip_address = ip_addr;
+}
+
+void display_add_log(String message) {
+    log_buffer[log_buffer_index] = message;
+    log_buffer_index++;
+    if (log_buffer_index >= LOG_BUFFER_SIZE) {
+        log_buffer_index = 0;
+        log_buffer_full = true;
+    }
+}
+
+void display_set_gpio_pins(const GpioPin* pins, int count) {
+    gpio_pins_ptr = pins;
+    num_gpio_pins = count;
 }
 
 
@@ -83,20 +110,58 @@ void draw_main_status_screen() {
 
     // Wi-Fi Status
     if (wifi_connected) {
-        u8g2.drawStr(0, 22, ip_address.c_str());
+        u8g2.setFont(u8g2_font_open_iconic_www_1x_t);
+        u8g2.drawGlyph(0, 22, 0x44);
+        u8g2.setFont(u8g2_font_profont12_tf);
+        u8g2.drawStr(10, 22, ip_address.c_str());
     } else {
         u8g2.drawStr(0, 22, "WiFi: Disconnected");
     }
 
     // Подсказка
-    u8g2.drawStr(0, 32, "-> GPIO Status");
+    u8g2.drawStr(85, 10, "-> Next");
 }
 
 void draw_gpio_status_screen() {
     u8g2.setFont(u8g2_font_profont11_tf);
-    u8g2.drawStr(0, 10, "GPIOs: [1] [2] [3] [4]");
-    // Здесь будет логика отображения состояния пинов
+    u8g2.drawStr(0, 10, "GPIO Status:");
+
+    if (gpio_pins_ptr != NULL) {
+        char pin_buf[32];
+        for (int i = 0; i < num_gpio_pins; i++) {
+            sprintf(pin_buf, "%s: %s", gpio_pins_ptr[i].name, gpio_pins_ptr[i].state ? "ON" : "OFF");
+            // Display 2 pins per line
+            u8g2.drawStr((i % 2) * 64, 20 + (i / 2) * 10, pin_buf);
+        }
+    } else {
+        u8g2.drawStr(0, 20, "No data");
+    }
 
     // Подсказка
-    u8g2.drawStr(0, 32, "-> Main Status");
+    u8g2.drawStr(85, 10, "-> Next");
+}
+
+void draw_log_screen() {
+    u8g2.setFont(u8g2_font_profont10_tf);
+    u8g2.drawStr(0, 8, "--- Log ---");
+
+    int start_index = log_buffer_full ? log_buffer_index : 0;
+    int count = log_buffer_full ? LOG_BUFFER_SIZE : log_buffer_index;
+
+    for (int i = 0; i < count; i++) {
+        int buffer_i = (start_index + i) % LOG_BUFFER_SIZE;
+        u8g2.drawStr(0, 18 + i * 8, log_buffer[buffer_i].c_str());
+    }
+
+    u8g2.drawStr(85, 10, "-> Next");
+}
+
+void display_next_screen() {
+    if (current_screen == SCREEN_MAIN_STATUS) {
+        current_screen = SCREEN_GPIO_STATUS;
+    } else if (current_screen == SCREEN_GPIO_STATUS) {
+        current_screen = SCREEN_LOG;
+    } else if (current_screen == SCREEN_LOG) {
+        current_screen = SCREEN_MAIN_STATUS;
+    }
 }

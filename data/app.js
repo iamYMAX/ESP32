@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { pin: 2, name: 'Built-in LED' },
         { pin: 18, name: 'GPIO 18' },
         { pin: 19, name: 'GPIO 19' },
-        { pin: 21, name: 'GPIO 21' }
+        { pin: 12, name: 'GPIO 12' }
     ];
 
     // --- Элементы управления генератором ДПКВ ---
@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const pwmControlSection = document.getElementById('pwm-control-section');
     const pwmSlider = document.getElementById('pwm-duty-slider');
     const pwmValueSpan = document.getElementById('pwm-value');
+
+    // --- Элементы управления дисплеем ---
+    const nextScreenBtn = document.getElementById('next-screen-btn');
 
 
     // --- Инициализация ---
@@ -109,6 +112,9 @@ document.addEventListener('DOMContentLoaded', () => {
     pwmSlider.addEventListener('input', () => { pwmValueSpan.textContent = pwmSlider.value; });
     pwmSlider.addEventListener('change', () => { sendCommand(`/set_relay_mode?mode=pwm&value=${pwmSlider.value}`); });
 
+    // Display
+    nextScreenBtn.addEventListener('click', () => { sendCommand('/next_screen'); });
+
 
     // --- Вспомогательные функции ---
     function createGpioCard(pinInfo) {
@@ -132,4 +138,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Первый запуск ---
     updateStatus();
+
+    // --- WebSocket and Chart ---
+    const chartCtx = document.getElementById('signalChart').getContext('2d');
+    const signalChart = new Chart(chartCtx, {
+        type: 'line',
+        data: {
+            labels: Array.from(Array(100).keys()),
+            datasets: [{
+                label: 'Pin 5 Signal',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            animation: false,
+            scales: {
+                y: {
+                    min: -0.1,
+                    max: 1.1,
+                    ticks: {
+                        stepSize: 1
+                    }
+                },
+                x: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    const socket = new WebSocket(`ws://${window.location.hostname}/ws`);
+    socket.binaryType = 'arraybuffer';
+
+    socket.onopen = () => console.log('WebSocket connection opened');
+    socket.onclose = () => console.log('WebSocket connection closed');
+    socket.onmessage = (event) => {
+        const data = new Uint8Array(event.data);
+        const chartData = signalChart.data.datasets[0].data;
+
+        for (let i = 0; i < data.length; i++) {
+            chartData.push(data[i]);
+        }
+
+        while (chartData.length > 100) {
+            chartData.shift();
+        }
+
+        signalChart.update();
+    };
 });

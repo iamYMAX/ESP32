@@ -62,8 +62,14 @@ void recalculate_params() {
     tooth_angle_res = ENG_DEGREES_PER_REV / current_pattern->total_teeth;
     missing_teeth_start_angle_res = (current_pattern->total_teeth - current_pattern->missing_teeth) * tooth_angle_res;
 
-    ignition_angle_res = ignition_angle_btdc * ENG_RESOLUTION_MULT;
-    dwell_start_angle_res = ignition_angle_res + dwell_angle_res;
+    // Corrected Ignition Calculation
+    ignition_angle_res = ENG_DEGREES_PER_REV - (ignition_angle_btdc * ENG_RESOLUTION_MULT);
+
+    if (dwell_angle_res > ignition_angle_res) { // Handle wrap-around
+        dwell_start_angle_res = ENG_DEGREES_PER_REV - (dwell_angle_res - ignition_angle_res);
+    } else {
+        dwell_start_angle_res = ignition_angle_res - dwell_angle_res;
+    }
 }
 
 void engine_simulator_set_rpm(uint16_t rpm) {
@@ -93,10 +99,38 @@ bool engine_simulator_set_pattern(const char* name) {
     return false;
 }
 
-void engine_simulator_set_dwell_time_ms(float ms) { current_dwell_ms = ms; recalculate_params(); }
-void engine_simulator_set_ignition_angle_btdc(uint16_t degrees) { ignition_angle_btdc = degrees; recalculate_params(); }
+void engine_simulator_set_dwell_time_ms(float ms) {
+    timerAlarmDisable(engine_timer);
+    current_dwell_ms = ms;
+    recalculate_params();
+    if (current_rpm > 0) timerAlarmEnable(engine_timer);
+}
 
-// ... функции get ...
+void engine_simulator_set_ignition_angle_btdc(uint16_t degrees) {
+    timerAlarmDisable(engine_timer);
+    ignition_angle_btdc = degrees;
+    recalculate_params();
+    if (current_rpm > 0) timerAlarmEnable(engine_timer);
+}
+
+// --- Функции для получения статуса ---
+
+const char* engine_simulator_get_current_pattern_name() {
+    return current_pattern->name;
+}
+
+uint16_t engine_simulator_get_current_rpm() {
+    return current_rpm;
+}
+
+float engine_simulator_get_current_dwell_time_ms() {
+    return current_dwell_ms;
+}
+
+uint16_t engine_simulator_get_current_ignition_angle_btdc() {
+    return ignition_angle_btdc;
+}
+
 
 void IRAM_ATTR onEngineTimer() {
     current_angle_res += angle_per_tick_res;
@@ -111,13 +145,17 @@ void IRAM_ATTR onEngineTimer() {
         digitalWrite(crank_pin, (current_angle_res % tooth_angle_res) < (tooth_angle_res / 2));
     }
 
-    if (!is_dwelling && current_angle_res >= dwell_start_angle_res) {
-        digitalWrite(ignition_pin, HIGH);
-        is_dwelling = true;
+    // Ignition Logic
+    bool dwelling_now = false;
+    if (dwell_start_angle_res < ignition_angle_res) { // Normal case, no wrap around
+        if (current_angle_res >= dwell_start_angle_res && current_angle_res < ignition_angle_res) {
+            dwelling_now = true;
+        }
+    } else { // Wrap around case
+        if (current_angle_res >= dwell_start_angle_res || current_angle_res < ignition_angle_res) {
+            dwelling_now = true;
+        }
     }
-    if (is_dwelling && current_angle_res >= ignition_angle_res) {
-        digitalWrite(ignition_pin, LOW);
-        is_dwelling = false;
-    }
+
+    digitalWrite(ignition_pin, dwelling_now);
 }
-// ... (getters omitted for brevity)
