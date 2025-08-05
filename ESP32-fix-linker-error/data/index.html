@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Web Control</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>ESP32 Advanced Control</h1>
+            <p>Управление GPIO и генератор сигнала ДПКВ</p>
+        </header>
+        <main>
+            <section class="controls">
+                <!-- Карточки управления GPIO будут добавлены сюда динамически -->
+            </section>
+
+            <section class="generator-card">
+                <h2>Генератор сигнала коленвала (ДПКВ)</h2>
+                <div class="generator-control">
+                    <label for="rpm-slider">Обороты (RPM): <span id="rpm-value">0</span></label>
+                    <input type="range" min="0" max="6000" value="0" class="rpm-slider" id="rpm-slider">
+                </div>
+                <div class="generator-control">
+                    <label for="pattern-select">Тип шкива:</label>
+                    <select name="patterns" id="pattern-select">
+                        <option value="60-2">60-2</option>
+                        <option value="36-1">36-1</option>
+                        <option value="36-2">36-2</option>
+                        <option value="12-1">12-1</option>
+                    </select>
+                </div>
+            </section>
+
+            <section class="generator-card">
+                <h2>Управление зажиганием</h2>
+                <div class="generator-control">
+                    <label for="dwell-time-input">Время накопления (Dwell), мс: <span id="dwell-value">3.0</span></label>
+                    <input type="range" min="1.0" max="8.0" value="3.0" step="0.1" class="rpm-slider" id="dwell-time-input">
+                </div>
+                <div class="generator-control">
+                    <label for="ignition-angle-input">УОЗ (градусы до ВМТ): <span id="angle-value">10</span></label>
+                    <input type="range" min="0" max="45" value="10" class="rpm-slider" id="ignition-angle-input">
+                </div>
+            </section>
+
+            <section class="generator-card">
+                <h2>Управление реле генератора</h2>
+                <div class="generator-control">
+                    <label for="relay-mode-select">Режим:</label>
+                    <select name="relay-modes" id="relay-mode-select">
+                        <option value="off">Выключено (OFF)</option>
+                        <option value="on">Включено (ON)</option>
+                        <option value="pwm">ШИМ (PWM)</option>
+                    </select>
+                </div>
+                <div class="generator-control" id="pwm-control-section" style="display: none;">
+                    <label for="pwm-duty-slider">Скважность ШИМ (%): <span id="pwm-value">50</span></label>
+                    <input type="range" min="0" max="100" value="50" class="rpm-slider" id="pwm-duty-slider">
+                </div>
+            </section>
+            <section class="generator-card">
+                <h2>Дисплей</h2>
+                <div class="generator-control">
+                    <button id="next-screen-btn" class="button">Следующий экран</button>
+                </div>
+            </section>
+            <section class="generator-card">
+                <h2>Signal Graph (Pin 5)</h2>
+                <canvas id="signalChart"></canvas>
+            </section>
+        </main>
+        <footer>
+            <p>ESP32 Async Web Server</p>
+        </footer>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
