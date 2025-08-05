@@ -7,6 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
         { pin: 19, name: 'GPIO 19' },
         { pin: 12, name: 'GPIO 12' }
     ];
+    const injectorPins = [
+        { id: 0, name: 'Injector 1 (Pin 4)' },
+        { id: 1, name: 'Injector 2 (Pin 26)' },
+        { id: 2, name: 'Injector 3 (Pin 27)' },
+        { id: 3, name: 'Injector 4 (Pin 32)' }
+    ];
 
     // --- Элементы управления генератором ДПКВ ---
     const rpmSlider = document.getElementById('rpm-slider');
@@ -32,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Инициализация ---
     // Создаем карточки GPIO
     gpioPins.forEach(createGpioCard);
+    injectorPins.forEach(createInjectorCard);
 
     // --- API-функции ---
     async function sendCommand(url) {
@@ -115,6 +122,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Display
     nextScreenBtn.addEventListener('click', () => { sendCommand('/next_screen'); });
 
+    // Injectors
+    document.querySelector('.injector-controls').addEventListener('change', e => {
+        if (e.target.matches('input[type="checkbox"]')) {
+            sendCommand(`/set_injector_state?id=${e.target.dataset.id}&state=${e.target.checked ? 1 : 0}`);
+        }
+    });
+
 
     // --- Вспомогательные функции ---
     function createGpioCard(pinInfo) {
@@ -134,6 +148,26 @@ document.addEventListener('DOMContentLoaded', () => {
         card.appendChild(title);
         card.appendChild(switchLabel);
         controlsContainer.appendChild(card);
+    }
+
+    function createInjectorCard(injectorInfo) {
+        const container = document.querySelector('.injector-controls');
+        const card = document.createElement('div');
+        card.className = 'control-card';
+        const title = document.createElement('h2');
+        title.textContent = injectorInfo.name;
+        const switchLabel = document.createElement('label');
+        switchLabel.className = 'switch';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.dataset.id = injectorInfo.id;
+        const slider = document.createElement('span');
+        slider.className = 'slider';
+        switchLabel.appendChild(checkbox);
+        switchLabel.appendChild(slider);
+        card.appendChild(title);
+        card.appendChild(switchLabel);
+        container.appendChild(card);
     }
 
     // --- Первый запуск ---

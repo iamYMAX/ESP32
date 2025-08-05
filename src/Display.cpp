@@ -12,6 +12,8 @@ static bool wifi_connected = false;
 static String ip_address = "N/A";
 static const GpioPin* gpio_pins_ptr = NULL;
 static int num_gpio_pins = 0;
+static const Injector* injectors_ptr = NULL;
+static int num_injectors = 0;
 
 // --- Log Buffer ---
 #define LOG_BUFFER_SIZE 4
@@ -24,6 +26,7 @@ enum MenuScreen {
     SCREEN_BOOT,
     SCREEN_MAIN_STATUS,
     SCREEN_GPIO_STATUS,
+    SCREEN_INJECTORS,
     SCREEN_LOG
 };
 static MenuScreen current_screen = SCREEN_BOOT;
@@ -32,6 +35,7 @@ static MenuScreen current_screen = SCREEN_BOOT;
 void draw_boot_screen();
 void draw_main_status_screen();
 void draw_gpio_status_screen();
+void draw_injectors_screen();
 void draw_log_screen();
 
 
@@ -55,6 +59,9 @@ void display_update() {
                 break;
             case SCREEN_GPIO_STATUS:
                 draw_gpio_status_screen();
+                break;
+            case SCREEN_INJECTORS:
+                draw_injectors_screen();
                 break;
             case SCREEN_LOG:
                 draw_log_screen();
@@ -90,6 +97,11 @@ void display_add_log(String message) {
 void display_set_gpio_pins(const GpioPin* pins, int count) {
     gpio_pins_ptr = pins;
     num_gpio_pins = count;
+}
+
+void display_set_injectors_state(const Injector* injectors, int count) {
+    injectors_ptr = injectors;
+    num_injectors = count;
 }
 
 
@@ -156,10 +168,30 @@ void draw_log_screen() {
     u8g2.drawStr(85, 10, "-> Next");
 }
 
+void draw_injectors_screen() {
+    u8g2.setFont(u8g2_font_profont11_tf);
+    u8g2.drawStr(0, 10, "Injector Status:");
+
+    if (injectors_ptr != NULL) {
+        char inj_buf[32];
+        for (int i = 0; i < num_injectors; i++) {
+            sprintf(inj_buf, "Inj %d: %s", i + 1, injectors_ptr[i].state ? "ON" : "OFF");
+            u8g2.drawStr((i % 2) * 64, 20 + (i / 2) * 10, inj_buf);
+        }
+    } else {
+        u8g2.drawStr(0, 20, "No data");
+    }
+
+    // Подсказка
+    u8g2.drawStr(85, 10, "-> Next");
+}
+
 void display_next_screen() {
     if (current_screen == SCREEN_MAIN_STATUS) {
         current_screen = SCREEN_GPIO_STATUS;
     } else if (current_screen == SCREEN_GPIO_STATUS) {
+        current_screen = SCREEN_INJECTORS;
+    } else if (current_screen == SCREEN_INJECTORS) {
         current_screen = SCREEN_LOG;
     } else if (current_screen == SCREEN_LOG) {
         current_screen = SCREEN_MAIN_STATUS;

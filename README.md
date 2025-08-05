@@ -30,6 +30,10 @@ This project turns an ESP32 into a versatile tool for automotive diagnostics and
 | 22  | I2C Clock (SCL)          | OLED Display     |
 | 23  | Ignition Signal Output   | Ignition Signal  |
 | 25  | Relay Control Output     | Relay            |
+| 4   | Injector 1 Output        | Injector 1       |
+| 26  | Injector 2 Output        | Injector 2       |
+| 27  | Injector 3 Output        | Injector 3       |
+| 32  | Injector 4 Output        | Injector 4       |
 
 **Note:** Ensure your push buttons are wired to ground, as the inputs are configured with internal pull-up resistors.
 
