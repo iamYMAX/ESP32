@@ -138,4 +138,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Первый запуск ---
     updateStatus();
+
+    // --- WebSocket and Chart ---
+    const chartCtx = document.getElementById('signalChart').getContext('2d');
+    const signalChart = new Chart(chartCtx, {
+        type: 'line',
+        data: {
+            labels: Array.from(Array(100).keys()),
+            datasets: [{
+                label: 'Pin 5 Signal',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            animation: false,
+            scales: {
+                y: {
+                    min: -0.1,
+                    max: 1.1,
+                    ticks: {
+                        stepSize: 1
+                    }
+                },
+                x: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    const socket = new WebSocket(`ws://${window.location.hostname}/ws`);
+    socket.binaryType = 'arraybuffer';
+
+    socket.onopen = () => console.log('WebSocket connection opened');
+    socket.onclose = () => console.log('WebSocket connection closed');
+    socket.onmessage = (event) => {
+        const data = new Uint8Array(event.data);
+        const chartData = signalChart.data.datasets[0].data;
+
+        for (let i = 0; i < data.length; i++) {
+            chartData.push(data[i]);
+        }
+
+        while (chartData.length > 100) {
+            chartData.shift();
+        }
+
+        signalChart.update();
+    };
 });

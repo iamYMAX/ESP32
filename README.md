@@ -58,3 +58,8 @@ The web interface allows you to:
 The device can be controlled using the three push buttons:
 - **Up / Down:** (Currently not assigned to a function, can be implemented in the future).
 - **Select:** Cycles through the different screens on the OLED display (Main Status, GPIO Status, Log).
+
+### Signal Graphing
+The web interface includes a real-time graph that displays the signal from an external source.
+- **Hardware:** Connect your external signal source to **Pin 5**.
+- **Web UI:** The graph will automatically display the signal data when you load the web page.

@@ -25,6 +25,7 @@ enum RelayMode { RELAY_OFF, RELAY_ON, RELAY_PWM };
 RelayMode current_relay_mode = RELAY_OFF;
 int current_pwm_duty = 50;
 AsyncWebServer *server = NULL;
+AsyncWebSocket ws("/ws");
 
 unsigned long last_display_update = 0;
 
@@ -42,12 +43,21 @@ void log_message(const char* format, ...) {
 
 void update_relay_state();
 
+void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len){
+  if(type == WS_EVT_CONNECT){
+    log_message("WebSocket client connected\n");
+  } else if(type == WS_EVT_DISCONNECT){
+    log_message("WebSocket client disconnected\n");
+  }
+}
+
 void setup() {
   Serial.begin(115200);
   display_init();
   input_init(BTN_UP_PIN, BTN_DOWN_PIN, BTN_SELECT_PIN);
   for (int i = 0; i < num_gpio_pins; i++) { pinMode(gpio_pins[i].pin, OUTPUT); digitalWrite(gpio_pins[i].pin, gpio_pins[i].state); }
   pinMode(RELAY_PIN, OUTPUT);
+  pinMode(5, INPUT); // Set pin 5 as input for graphing
   ledcSetup(PWM_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
   ledcAttachPin(RELAY_PIN, PWM_CHANNEL);
   update_relay_state();
@@ -67,6 +77,8 @@ void setup() {
   }
 
   server = new AsyncWebServer(80);
+  ws.onEvent(onWsEvent);
+  server->addHandler(&ws);
 
   // --- Веб-сервер ---
   server->on("/", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/index.html", "text/html"); });
@@ -166,6 +178,12 @@ void setup() {
   log_message("HTTP server started\n");
 }
 
+#define SAMPLE_BUFFER_SIZE 20
+uint8_t sample_buffer[SAMPLE_BUFFER_SIZE];
+int sample_index = 0;
+unsigned long last_sample_time = 0;
+unsigned long last_send_time = 0;
+
 void loop() {
   ButtonAction action = input_check();
   if (action == ACTION_SELECT) {
@@ -174,6 +192,19 @@ void loop() {
   } else if (action != ACTION_NONE) {
     log_message("Button Action: %d\n", action);
   }
+
+  if (millis() - last_sample_time > 1) {
+    sample_buffer[sample_index++] = digitalRead(5);
+    last_sample_time = millis();
+  }
+
+  if (sample_index >= SAMPLE_BUFFER_SIZE) {
+    if (ws.count() > 0) {
+      ws.binaryAll(sample_buffer, SAMPLE_BUFFER_SIZE);
+    }
+    sample_index = 0;
+  }
+
   if (millis() - last_display_update > 100) {
     display_set_rpm(engine_simulator_get_current_rpm());
     display_set_wifi_status(WiFi.status() == WL_CONNECTED, WiFi.localIP().toString());
