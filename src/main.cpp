@@ -55,6 +55,8 @@ void setup() {
   engine_simulator_init(CRANK_SIGNAL_PIN, IGNITION_PIN);
   LittleFS.begin(true);
   WiFiManager wm;
+  wm.setDebugOutput(true);
+  wm.setConfigPortalTimeout(60);
   bool res;
   res = wm.autoConnect("AutoConnectAP");
 
