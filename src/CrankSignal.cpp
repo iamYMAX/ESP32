@@ -62,8 +62,14 @@ void recalculate_params() {
     tooth_angle_res = ENG_DEGREES_PER_REV / current_pattern->total_teeth;
     missing_teeth_start_angle_res = (current_pattern->total_teeth - current_pattern->missing_teeth) * tooth_angle_res;
 
-    ignition_angle_res = ignition_angle_btdc * ENG_RESOLUTION_MULT;
-    dwell_start_angle_res = ignition_angle_res + dwell_angle_res;
+    // Corrected Ignition Calculation
+    ignition_angle_res = ENG_DEGREES_PER_REV - (ignition_angle_btdc * ENG_RESOLUTION_MULT);
+
+    if (dwell_angle_res > ignition_angle_res) { // Handle wrap-around
+        dwell_start_angle_res = ENG_DEGREES_PER_REV - (dwell_angle_res - ignition_angle_res);
+    } else {
+        dwell_start_angle_res = ignition_angle_res - dwell_angle_res;
+    }
 }
 
 void engine_simulator_set_rpm(uint16_t rpm) {
@@ -139,12 +145,17 @@ void IRAM_ATTR onEngineTimer() {
         digitalWrite(crank_pin, (current_angle_res % tooth_angle_res) < (tooth_angle_res / 2));
     }
 
-    if (!is_dwelling && current_angle_res >= dwell_start_angle_res) {
-        digitalWrite(ignition_pin, HIGH);
-        is_dwelling = true;
+    // Ignition Logic
+    bool dwelling_now = false;
+    if (dwell_start_angle_res < ignition_angle_res) { // Normal case, no wrap around
+        if (current_angle_res >= dwell_start_angle_res && current_angle_res < ignition_angle_res) {
+            dwelling_now = true;
+        }
+    } else { // Wrap around case
+        if (current_angle_res >= dwell_start_angle_res || current_angle_res < ignition_angle_res) {
+            dwelling_now = true;
+        }
     }
-    if (is_dwelling && current_angle_res >= ignition_angle_res) {
-        digitalWrite(ignition_pin, LOW);
-        is_dwelling = false;
-    }
+
+    digitalWrite(ignition_pin, dwelling_now);
 }
