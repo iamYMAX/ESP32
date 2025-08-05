@@ -20,7 +20,7 @@ const char* password = "YOUR_WIFI_PASSWORD";
 #define PWM_RESOLUTION 8
 
 // --- Глобальные объекты и состояния ---
-GpioPin gpio_pins[] = {{2, "LED", false}, {18, "P18", false}, {19, "P19", false}, {21, "P21", false}};
+GpioPin gpio_pins[] = {{2, "LED", false}, {18, "P18", false}, {19, "P19", false}, {12, "P12", false}};
 const int num_gpio_pins = sizeof(gpio_pins) / sizeof(gpio_pins[0]);
 enum RelayMode { RELAY_OFF, RELAY_ON, RELAY_PWM };
 RelayMode current_relay_mode = RELAY_OFF;
