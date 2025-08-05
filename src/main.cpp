@@ -24,16 +24,6 @@ const char* password = "YOUR_WIFI_PASSWORD";
 #define INJECTOR_4_PIN 32
 
 // --- Глобальные объекты и состояния ---
-enum InjectorMode { INJ_OFF, INJ_ON, INJ_AUTO, INJ_CLEAN, INJ_BOOST };
-
-struct Injector {
-  const uint8_t pin;
-  bool state;
-  InjectorMode mode;
-  int frequency;
-  int duty_cycle;
-};
-
 Injector injectors[] = {
   {INJECTOR_1_PIN, false, INJ_OFF, 10, 50},
   {INJECTOR_2_PIN, false, INJ_OFF, 10, 50},
@@ -41,7 +31,6 @@ Injector injectors[] = {
   {INJECTOR_4_PIN, false, INJ_OFF, 10, 50}
 };
 const int num_injectors = sizeof(injectors) / sizeof(injectors[0]);
-struct GpioPin { const uint8_t pin; const char* name; bool state; };
 GpioPin gpio_pins[] = {{2, "LED", false}, {18, "P18", false}, {19, "P19", false}, {21, "P21", false}};
 const int num_gpio_pins = sizeof(gpio_pins) / sizeof(gpio_pins[0]);
 enum RelayMode { RELAY_OFF, RELAY_ON, RELAY_PWM };
@@ -159,7 +148,7 @@ void setup() {
     request->send(200);
   });
 
-  server->on("/set_injector_state", HTTP_GET, [](AsyncWebServerRequest *request){
+  server.on("/set_injector_state", HTTP_GET, [](AsyncWebServerRequest *request){
     if (request->hasParam("id")) {
       int id = request->getParam("id")->value().toInt();
       if (id >= 0 && id < num_injectors) {
