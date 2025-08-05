@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { pin: 2, name: 'Built-in LED' },
         { pin: 18, name: 'GPIO 18' },
         { pin: 19, name: 'GPIO 19' },
-        { pin: 21, name: 'GPIO 21' }
+        { pin: 12, name: 'GPIO 12' }
     ];
 
     // --- Элементы управления генератором ДПКВ ---

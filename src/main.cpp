@@ -59,11 +59,11 @@ void setup() {
   // wm.resetSettings(); // Раскомментируйте для сброса настроек WiFi
   bool res = wm.autoConnect("ECU-Simulator-AP");
   if(!res) {
-    Serial.println("Failed to connect");
+    log_message("Failed to connect\n");
     // ESP.restart();
   }
   else {
-    Serial.println("WiFi Connected: " + WiFi.localIP().toString());
+    log_message("WiFi Connected: %s\n", WiFi.localIP().toString().c_str());
   }
 
   server = new AsyncWebServer(80);

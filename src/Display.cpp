@@ -110,7 +110,10 @@ void draw_main_status_screen() {
 
     // Wi-Fi Status
     if (wifi_connected) {
-        u8g2.drawStr(0, 22, ip_address.c_str());
+        u8g2.setFont(u8g2_font_open_iconic_www_1x_t);
+        u8g2.drawGlyph(0, 22, 0x44);
+        u8g2.setFont(u8g2_font_profont12_tf);
+        u8g2.drawStr(10, 22, ip_address.c_str());
     } else {
         u8g2.drawStr(0, 22, "WiFi: Disconnected");
     }
