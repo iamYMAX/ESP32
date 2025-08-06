@@ -31,4 +31,7 @@ uint16_t engine_simulator_get_current_rpm();
 float engine_simulator_get_current_dwell_time_ms();
 uint16_t engine_simulator_get_current_ignition_angle_btdc();
 
+// Принудительное пересчитывание
+void engine_simulator_recalculate();
+
 #endif // ENGINE_SIMULATOR_H

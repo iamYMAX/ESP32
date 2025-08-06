@@ -6,8 +6,10 @@
 #include "CrankSignal.h"
 #include "Display.h"
 #include "Input.h"
+#include "InjectorControl.h"
 
 // --- Конфигурация и Пины ---
+const uint8_t INJECTOR_PINS[NUM_INJECTORS] = {26, 27, 32, 33};
 #define CRANK_SIGNAL_PIN 17
 #define IGNITION_PIN 23
 #define RELAY_PIN 25
@@ -62,6 +64,7 @@ void setup() {
   ledcAttachPin(RELAY_PIN, PWM_CHANNEL);
   update_relay_state();
   engine_simulator_init(CRANK_SIGNAL_PIN, IGNITION_PIN);
+  injector_control_init(INJECTOR_PINS); // Initialize injectors
   LittleFS.begin(true);
 
   WiFi.mode(WIFI_STA);
@@ -102,7 +105,17 @@ void setup() {
     const char* mode_str = (current_relay_mode == RELAY_OFF) ? "off" : ((current_relay_mode == RELAY_ON) ? "on" : "pwm");
     json += "\"mode\":\"" + String(mode_str) + "\",";
     json += "\"pwm_duty\":" + String(current_pwm_duty);
-    json += "}}";
+    json += "},\"injectors\":[";
+    const InjectorState* injectors = get_injector_states();
+    for (int i = 0; i < NUM_INJECTORS; i++) {
+        json += "{";
+        json += "\"enabled\":" + String(injectors[i].enabled ? "true" : "false") + ",";
+        json += "\"angle\":" + String(injectors[i].opening_angle_deg) + ",";
+        json += "\"duration\":" + String(injectors[i].duration_ms, 2);
+        json += "}";
+        if (i < NUM_INJECTORS - 1) json += ",";
+    }
+    json += "]}";
     request->send(200, "application/json", json);
   });
 
@@ -171,6 +184,26 @@ void setup() {
   server->on("/next_screen", HTTP_GET, [](AsyncWebServerRequest *request){
     log_message("[WEB] Next Screen\n");
     display_next_screen();
+    request->send(200);
+  });
+
+  server->on("/set_injector_params", HTTP_GET, [](AsyncWebServerRequest *request){
+    if (request->hasParam("injector")) {
+        uint8_t index = request->getParam("injector")->value().toInt();
+        bool enabled = request->hasParam("enabled") ? request->getParam("enabled")->value() == "true" : false;
+        uint16_t angle = request->hasParam("angle") ? request->getParam("angle")->value().toInt() : 0;
+        float duration = request->hasParam("duration") ? request->getParam("duration")->value().toFloat() : 0;
+
+        log_message("[WEB] Set Injector %d: enabled=%d, angle=%d, duration=%.2f\n", index, enabled, angle, duration);
+        injector_control_set_params(index, enabled, angle, duration);
+        engine_simulator_recalculate(); // Recalculate all engine params
+    }
+    request->send(200);
+  });
+
+  server->on("/start_injector_cleaning", HTTP_GET, [](AsyncWebServerRequest *request){
+    log_message("[WEB] Start injector cleaning cycle\n");
+    injector_control_start_cleaning_cycle();
     request->send(200);
   });
 

@@ -1,4 +1,5 @@
 #include "CrankSignal.h"
+#include "InjectorControl.h" // Include the new header
 
 // --- Конфигурация и переменные модуля ---
 #define ISR_FREQUENCY_HZ 100000
@@ -55,6 +56,9 @@ void recalculate_params() {
     uint64_t total_angle_per_min = (uint64_t)current_rpm * ENG_DEGREES_PER_REV;
     uint64_t total_angle_per_sec = total_angle_per_min / 60;
     angle_per_tick_res = total_angle_per_sec / ISR_FREQUENCY_HZ;
+
+    // Recalculate injector timings as well
+    injector_control_recalculate(total_angle_per_sec);
 
     float dwell_sec = current_dwell_ms / 1000.0f;
     dwell_angle_res = (uint32_t)(dwell_sec * total_angle_per_sec);
@@ -131,6 +135,13 @@ uint16_t engine_simulator_get_current_ignition_angle_btdc() {
     return ignition_angle_btdc;
 }
 
+void engine_simulator_recalculate() {
+    timerAlarmDisable(engine_timer);
+    recalculate_params();
+    if (current_rpm > 0) {
+        timerAlarmEnable(engine_timer);
+    }
+}
 
 void IRAM_ATTR onEngineTimer() {
     current_angle_res += angle_per_tick_res;
@@ -158,4 +169,7 @@ void IRAM_ATTR onEngineTimer() {
     }
 
     digitalWrite(ignition_pin, dwelling_now);
+
+    // Update injectors
+    injector_control_update(current_angle_res);
 }
