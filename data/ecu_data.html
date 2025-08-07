@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 - ECU Data</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Данные с ЭБУ</h1>
+            <p>Отображение данных, полученных по CAN и K-Line шинам</p>
+            <a href="/" class="button-link">Вернуться на главную</a>
+        </header>
+        <main>
+            <section class="generator-card">
+                <h2>Панель данных</h2>
+                <div id="data-widgets-container">
+                    <!-- Data widgets will be inserted here dynamically -->
+                </div>
+            </section>
+
+            <section class="generator-card">
+                <h2>Управление</h2>
+                <div class="generator-control">
+                    <label for="pid-select">Добавить параметр:</label>
+                    <select id="pid-select">
+                        <option value="rpm">Обороты двигателя (RPM)</option>
+                        <option value="speed">Скорость автомобиля (км/ч)</option>
+                        <!-- More PIDs can be added here -->
+                    </select>
+                    <button id="add-widget-btn" class="button">Добавить</button>
+                </div>
+            </section>
+        </main>
+        <footer>
+            <p>ESP32 Async Web Server</p>
+        </footer>
+    </div>
+    <script src="ecu_app.js"></script>
+</body>
+</html>

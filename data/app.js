@@ -28,20 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Элементы управления дисплеем ---
     const nextScreenBtn = document.getElementById('next-screen-btn');
 
-    // --- Элементы управления форсунками ---
-    const injectorsContainer = document.getElementById('injectors-container');
-    const cleanInjectorsBtn = document.getElementById('clean-injectors-btn');
-    const NUM_INJECTORS = 4;
-
 
     // --- Инициализация ---
     // Создаем карточки GPIO
     gpioPins.forEach(createGpioCard);
-    // Создаем карточки управления форсунками
-    for (let i = 0; i < NUM_INJECTORS; i++) {
-        createInjectorCard(i);
-    }
-
 
     // --- API-функции ---
     async function sendCommand(url) {
@@ -87,18 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 pwmValueSpan.textContent = status.relay.pwm_duty;
                 pwmControlSection.style.display = status.relay.mode === 'pwm' ? 'block' : 'none';
             }
-            // Injectors
-            if (status.injectors) {
-                status.injectors.forEach((inj, index) => {
-                    document.querySelector(`.injector-enable[data-injector="${index}"]`).checked = inj.enabled;
-                    const angleSlider = document.querySelector(`.injector-angle[data-injector="${index}"]`);
-                    angleSlider.value = inj.angle;
-                    document.getElementById(`inj-angle-val-${index}`).textContent = inj.angle;
-                    const durationSlider = document.querySelector(`.injector-duration[data-injector="${index}"]`);
-                    durationSlider.value = inj.duration;
-                    document.getElementById(`inj-duration-val-${index}`).textContent = parseFloat(inj.duration).toFixed(1);
-                });
-            }
 
         } catch (error) {
             console.error("Failed to fetch status:", error);
@@ -137,29 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Display
     nextScreenBtn.addEventListener('click', () => { sendCommand('/next_screen'); });
 
-    // Injectors
-    cleanInjectorsBtn.addEventListener('click', () => { sendCommand('/start_injector_cleaning'); });
-
-    injectorsContainer.addEventListener('input', e => {
-        if (!e.target.dataset.injector) return;
-        const index = e.target.dataset.injector;
-        if (e.target.matches('.injector-angle')) {
-            document.getElementById(`inj-angle-val-${index}`).textContent = e.target.value;
-        } else if (e.target.matches('.injector-duration')) {
-            document.getElementById(`inj-duration-val-${index}`).textContent = parseFloat(e.target.value).toFixed(1);
-        }
-    });
-
-    injectorsContainer.addEventListener('change', e => {
-        if (!e.target.dataset.injector) return;
-        const index = e.target.dataset.injector;
-        const enabled = document.querySelector(`.injector-enable[data-injector="${index}"]`).checked;
-        const angle = document.querySelector(`.injector-angle[data-injector="${index}"]`).value;
-        const duration = document.querySelector(`.injector-duration[data-injector="${index}"]`).value;
-
-        sendCommand(`/set_injector_params?injector=${index}&enabled=${enabled}&angle=${angle}&duration=${duration}`);
-    });
-
 
     // --- Вспомогательные функции ---
     function createGpioCard(pinInfo) {
@@ -179,29 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
         card.appendChild(title);
         card.appendChild(switchLabel);
         controlsContainer.appendChild(card);
-    }
-
-    function createInjectorCard(index) {
-        const injectorDiv = document.createElement('div');
-        injectorDiv.className = 'injector-control-group';
-        injectorDiv.innerHTML = `
-            <div class="injector-title">
-                <h4>Форсунка ${index + 1}</h4>
-                <label class="switch">
-                    <input type="checkbox" data-injector="${index}" class="injector-enable">
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <div class="generator-control">
-                <label>Угол открытия (°ДПКВ): <span id="inj-angle-val-${index}">0</span></label>
-                <input type="range" min="0" max="720" value="0" class="rpm-slider injector-angle" data-injector="${index}">
-            </div>
-            <div class="generator-control">
-                <label>Длительность (мс): <span id="inj-duration-val-${index}">0.0</span></label>
-                <input type="range" min="0" max="20" value="0" step="0.1" class="rpm-slider injector-duration" data-injector="${index}">
-            </div>
-        `;
-        injectorsContainer.appendChild(injectorDiv);
     }
 
     // --- Первый запуск ---

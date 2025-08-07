@@ -5,7 +5,6 @@ This project turns an ESP32 into a versatile tool for automotive diagnostics and
 - Control GPIO pins.
 - Simulate ignition signals.
 - Control a relay with simple ON/OFF or PWM signals.
-- **Control up to 4 fuel injectors** with configurable timing and duration.
 - Display real-time status on a small OLED screen.
 
 ## Hardware Setup
@@ -31,10 +30,6 @@ This project turns an ESP32 into a versatile tool for automotive diagnostics and
 | 22  | I2C Clock (SCL)          | OLED Display     |
 | 23  | Ignition Signal Output   | Ignition Signal  |
 | 25  | Relay Control Output     | Relay            |
-| 26  | Injector 1 Output        | Injector 1       |
-| 27  | Injector 2 Output        | Injector 2       |
-| 32  | Injector 3 Output        | Injector 3       |
-| 33  | Injector 4 Output        | Injector 4       |
 
 **Note:** Ensure your push buttons are wired to ground, as the inputs are configured with internal pull-up resistors.
 

@@ -6,10 +6,10 @@
 #include "CrankSignal.h"
 #include "Display.h"
 #include "Input.h"
-#include "InjectorControl.h"
+#include "CAN_Handler.h"
+#include "KLine_Handler.h"
 
 // --- Конфигурация и Пины ---
-const uint8_t INJECTOR_PINS[NUM_INJECTORS] = {26, 27, 32, 33};
 #define CRANK_SIGNAL_PIN 17
 #define IGNITION_PIN 23
 #define RELAY_PIN 25
@@ -64,7 +64,6 @@ void setup() {
   ledcAttachPin(RELAY_PIN, PWM_CHANNEL);
   update_relay_state();
   engine_simulator_init(CRANK_SIGNAL_PIN, IGNITION_PIN);
-  injector_control_init(INJECTOR_PINS); // Initialize injectors
   LittleFS.begin(true);
 
   WiFi.mode(WIFI_STA);
@@ -87,6 +86,8 @@ void setup() {
   server->on("/", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/index.html", "text/html"); });
   server->on("/style.css", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/style.css", "text/css"); });
   server->on("/app.js", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/app.js", "text/javascript"); });
+  server->on("/ecu_app.js", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/ecu_app.js", "text/javascript"); });
+  server->on("/ecu", HTTP_GET, [](AsyncWebServerRequest *r){ r->send(LittleFS, "/ecu_data.html", "text/html"); });
 
   server->on("/status", HTTP_GET, [](AsyncWebServerRequest *request){
     String json = "{";
@@ -105,17 +106,7 @@ void setup() {
     const char* mode_str = (current_relay_mode == RELAY_OFF) ? "off" : ((current_relay_mode == RELAY_ON) ? "on" : "pwm");
     json += "\"mode\":\"" + String(mode_str) + "\",";
     json += "\"pwm_duty\":" + String(current_pwm_duty);
-    json += "},\"injectors\":[";
-    const InjectorState* injectors = get_injector_states();
-    for (int i = 0; i < NUM_INJECTORS; i++) {
-        json += "{";
-        json += "\"enabled\":" + String(injectors[i].enabled ? "true" : "false") + ",";
-        json += "\"angle\":" + String(injectors[i].opening_angle_deg) + ",";
-        json += "\"duration\":" + String(injectors[i].duration_ms, 2);
-        json += "}";
-        if (i < NUM_INJECTORS - 1) json += ",";
-    }
-    json += "]}";
+    json += "}}";
     request->send(200, "application/json", json);
   });
 
@@ -187,28 +178,11 @@ void setup() {
     request->send(200);
   });
 
-  server->on("/set_injector_params", HTTP_GET, [](AsyncWebServerRequest *request){
-    if (request->hasParam("injector")) {
-        uint8_t index = request->getParam("injector")->value().toInt();
-        bool enabled = request->hasParam("enabled") ? request->getParam("enabled")->value() == "true" : false;
-        uint16_t angle = request->hasParam("angle") ? request->getParam("angle")->value().toInt() : 0;
-        float duration = request->hasParam("duration") ? request->getParam("duration")->value().toFloat() : 0;
-
-        log_message("[WEB] Set Injector %d: enabled=%d, angle=%d, duration=%.2f\n", index, enabled, angle, duration);
-        injector_control_set_params(index, enabled, angle, duration);
-        engine_simulator_recalculate(); // Recalculate all engine params
-    }
-    request->send(200);
-  });
-
-  server->on("/start_injector_cleaning", HTTP_GET, [](AsyncWebServerRequest *request){
-    log_message("[WEB] Start injector cleaning cycle\n");
-    injector_control_start_cleaning_cycle();
-    request->send(200);
-  });
-
   server->begin();
   log_message("HTTP server started\n");
+
+  can_handler_init();
+  kline_handler_init();
 }
 
 #define SAMPLE_BUFFER_SIZE 20
@@ -244,6 +218,30 @@ void loop() {
     display_set_gpio_pins(gpio_pins, num_gpio_pins);
     display_update();
     last_display_update = millis();
+  }
+
+  // Check for ECU data
+  CAN_Message can_msg;
+  if (can_handler_read(can_msg)) {
+    // Parse RPM from CAN message: ((A*256)+B)/4
+    if (can_msg.data[1] == 0x01 && can_msg.data[2] == 0x0C) {
+        int rpm = ((can_msg.data[3] * 256) + can_msg.data[4]) / 4;
+        String json = "{\"type\":\"ecu_data\",\"pid\":\"rpm\",\"value\":" + String(rpm) + "}";
+        ws.textAll(json);
+        log_message("Sent RPM data via WS: %s\n", json.c_str());
+    }
+  }
+
+  uint8_t kline_buf[KLINE_MAX_MSG_LEN];
+  int kline_len = kline_handler_read(kline_buf, KLINE_MAX_MSG_LEN);
+  if (kline_len > 0) {
+    // Parse Speed from K-Line message
+    if (kline_buf[0] == 0x41 && kline_buf[1] == 0x0D) {
+        int speed = kline_buf[2];
+        String json = "{\"type\":\"ecu_data\",\"pid\":\"speed\",\"value\":" + String(speed) + "}";
+        ws.textAll(json);
+        log_message("Sent Speed data via WS: %s\n", json.c_str());
+    }
   }
 }
 
